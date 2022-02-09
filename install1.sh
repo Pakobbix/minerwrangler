@@ -50,16 +50,40 @@ nvidia_install() {
   apt install nvidia-driver-460 nvidia-cuda-toolkit -y
 }
 
-# Phoenix Miner installation
-phoenixminer_install() {
-  # Download latest Phoenix Miner (5.5c at the time of editing this) - https://phoenixminer.org/download/latest/
-  wget https://github.com/PhoenixMinerDevTeam/PhoenixMiner/releases/download/5.5c/PhoenixMiner_5.5c_Linux.tar.gz
-  # Extract the file, delete the installer tar.gz file, and rename it
-  tar -zxvf PhoenixMiner_*
-  rm *tar.gz
-  mv PhoenixMiner_* PhoenixMiner
-  # Make Phoenix Miner itself executable
-  cd PhoenixMiner && chmod +x PhoenixMiner && cd ..
+IFS=$'\n'
+question="Choose your preferred miner Software: "
+entrys=("T-Rex Miner" "Phoenix Miner" "Nanominer")
+
+PS3="$question "
+select entry in "${entrys[@]}" "Abort"; do
+
+miner_install() {
+	if ((REPLY == 1 + ${#entrys[@]})); then
+		exit
+		break
+
+	elif ((REPLY > 0 && REPLY <= ${#entrys[@]})); then
+		if [ "$entry" == "T-Rex Miner" ]; then
+			latest=$(curl -s https://github.com/trexminer/T-Rex/releases/latest | sed 's/.*href="\|">.*//g')
+			filename=$(curl -s "$latest" | grep -i "linux" | grep -i "text" | sed 's/.*">\|<\/.*//g')
+			wget "$(echo "$latest" | sed 's/tag/download/g')/$filename"
+      mkdir T-Rex && tar -zxvf $filename -C T-Rex
+		elif [ "$entry" == "Phoenix Miner" ]; then
+			dllink=$(curl -s https://phoenixminer.org/download/latest/ | grep "Linux" | grep "cutt" | sed 's/.*href="\|"\ rel.*//g' | head -n 1)
+			wget -r -p -k "$dllink"
+      cd cutt.ly/
+      mv * phoenixminer.zip
+      unzip phoenixminer.zip
+		elif [ "$entry" == "Nanominer" ]; then
+			latest=$(curl -s https://github.com/nanopool/nanominer/releases/latest | sed 's/.*href="\|">.*//g')
+			filename=$(curl -s "$latest" | grep 'linux-[0-9].[0-9].[0-99]-cuda' | grep -i "text" | sed 's/.*">\|<\/.*//g')
+			wget "$(echo "$latest" | sed 's/tag/download/g')/$filename"
+      tar -xvf "$filename"
+      mv nanominer*/ nanominer
+		fi
+	fi
+	break
+done
 }
 
 # ETHlargementPill installation for GTX 1080, 1080TI and Titan XP
@@ -105,7 +129,7 @@ yes | ufw enable
 # installation
 if [[ $vendor =~ "NVIDIA" ]]; then
   nvidia_install
-  phoenixminer_install
+  miner_install
   if [[ $var = 4 ]]; then
     pill_install
   fi
