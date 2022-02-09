@@ -47,7 +47,8 @@ nvidia_install() {
   add-apt-repository ppa:graphics-drivers/ppa -y
   apt upgrade -y
   # install all the necessary libraries, will ask config during install
-  apt install nvidia-driver-460 nvidia-cuda-toolkit -y
+  latestnv=$(apt search nvidia-driver-[0-999] | grep -v "Transitional\|Übergangspaket" | grep "nvidia-driver-[400-999]" | sort -nr | head -n 1 | sed 's/\/.*//g')
+  apt install $latestnv nvidia-cuda-toolkit -y
 }
 
 IFS=$'\n'
