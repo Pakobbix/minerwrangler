@@ -1,0 +1,111 @@
+1 Enter BIOS/UEFI menu
+
+2. Enable the VT-d/AMD-d CPU flags
+
+Because some menus are different look for something like Enable Virtualization Technology
+
+
+
+3. Set boot priority for your UEFI-based Proxmox drive
+
+You may see Proxmox and (UEFI) Proxmox boot options or something similar
+
+You may need to disable CSM to ensure the system boots using UEFI
+
+
+
+Proxmox SSH/Shell
+
+4. SSH or Shell into Proxmox then:
+
+GRUB
+
+Edit /etc/default/grub and modify the appropriate line:
+
+Intel: GRUB_CMDLINE_LINUX_DEFAULT=quiet intel_iommu=on iommu=pt vga=off
+
+AMD: GRUB_CMDLINE_LINUX_DEFAULT=quiet amd_iommu=on iommu=pt vga=off
+
+Save and close file then run update-grub2 to apply the changes
+
+ZFS
+
+Edit /etc/kernel/cmdline and modify the appropriate line:
+
+Intel: root=ZFS=rpool/ROOT/pve-1 boot=zfs quiet intel_iommu=on iommu=pt
+
+AMD: root=ZFS=rpool/ROOT/pve-1 boot=zfs quiet amd_iommu=on iommu=pt
+
+Save and close file then run pve-efiboot-tool refresh to apply the changes
+
+You may need to put quiet ... iommu=pt on its own line
+
+Thanks to u/edfreitag for supplying the sourcing!
+
+
+
+5. Still in Proxmox SSH/Shell, edit Kernel Modules /etc/modules and add the following lines:
+
+vfio
+vfio_iommu_type1
+vfio_pci
+vfio_virqfd
+6. Save and close modules file then run update-initramfs to add the kernel modules
+
+7. Reboot host machine
+
+
+
+Proxmox WebUI
+
+8. Create a new VM with OVMF BIOS and as a q35 machine. DO NOT SKIP setting processor type!
+
+# Use whatever other settings you want, but the following are required
+
+SYSTEM
+  BIOS: OVMF(UEFI)
+  Machine: q35
+
+PROCESSOR
+  TYPE: IvyBridge        # Your CPU may not be an IvyBridge
+https://preview.redd.it/w9ir4kyafif61.png?width=722&format=png&auto=webp&s=202019ae95d2ad10fb081d2a0dc099f69b32dc9a
+
+9. Add your graphics card as a new PCI device
+
+10. Set device to use All functions and PCI Express. DO NOT set as primary GPU!
+
+11. Start VM and install OS
+
+
+
+Virtual Machine
+
+12. Boot OS and install graphics card driver
+
+13. Open Device Manager and confirm you see both the GPU name and an error 43 on your display driver
+
+14. Enable RDP (optional as this guide allows you to use both Console and RDP)
+
+15. Safely reboot then power down VM
+
+
+
+Proxmox VM Settings
+
+16. In Proxmox VM settings:
+
+Set Display to VirtIO-GPU (virtio)
+
+Set PCI Device as Primary GPU
+
+
+
+Endgame
+
+17. Start VM and confirm error 43 is gone
+
+18. Start gaming!
+
+
+
+Cheers!
